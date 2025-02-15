@@ -1,0 +1,638 @@
+{
+  "openapi": "3.0.0",
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Local development server"
+    }
+  ],
+  "info": {
+    "description": "An API for an emulation of skier managment system for RFID tagged lift tickets. Basis for CS6650 Assignments for 2019",
+    "version": "2.0",
+    "title": "Ski Data API for NEU Seattle distributed systems course"
+  },
+  "tags": [
+    {
+      "name": "resorts",
+      "description": "Ski Resort Lift Data information"
+    },
+    {
+      "name": "skiers",
+      "description": "Information about skiers and their lift usage"
+    },
+    {
+      "name": "statistics",
+      "description": "Server side response time values"
+    }
+  ],
+  "paths": {
+    "/resorts": {
+      "get": {
+        "tags": [
+          "resorts"
+        ],
+        "summary": "get a list of ski resorts in the database",
+        "operationId": "getResorts",
+        "responses": {
+          "200": {
+            "description": "successful operation, empty list returned if no data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResortsList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resorts/{resortID}/seasons/{seasonID}/day/{dayID}/skiers": {
+      "get": {
+        "tags": [
+          "resorts"
+        ],
+        "summary": "get number of unique skiers at resort/season/day",
+        "operationId": "getResortSkiersDay",
+        "parameters": [
+          {
+            "name": "resortID",
+            "in": "path",
+            "description": "ID of the resort of interest",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "seasonID",
+            "in": "path",
+            "description": "ID of the resort of interest",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "dayID",
+            "in": "path",
+            "description": "ID of the resort of interest",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResortSkiers"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid Resort ID supplied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/responseMsg"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resort not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/responseMsg"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resorts/{resortID}/seasons": {
+      "get": {
+        "tags": [
+          "resorts"
+        ],
+        "summary": "get a list of seasons for the specified resort",
+        "operationId": "getResortSeasons",
+        "parameters": [
+          {
+            "name": "resortID",
+            "in": "path",
+            "description": "ID of the resort of interest",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeasonsList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid Resort ID supplied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/responseMsg"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resort not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/responseMsg"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "resorts"
+        ],
+        "summary": "Add a new season for a resort",
+        "operationId": "addSeason",
+        "parameters": [
+          {
+            "name": "resortID",
+            "in": "path",
+            "description": "ID of the resort of interest",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Specify new Season value",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "year": {
+                    "description": "4 character string specifying new season start year",
+                    "type": "string",
+                    "example": 2019
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "new season created"
+          },
+          "400": {
+            "description": "Invalid inputs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/responseMsg"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resort not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/responseMsg"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/skiers/{resortID}/seasons/{seasonID}/days/{dayID}/skiers/{skierID}": {
+      "post": {
+        "tags": [
+          "skiers"
+        ],
+        "summary": "write a new lift ride for the skier",
+        "description": "Stores new lift ride details in the data store",
+        "operationId": "writeNewLiftRide",
+        "parameters": [
+          {
+            "name": "resortID",
+            "in": "path",
+            "description": "ID of the resort the skier is at",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "seasonID",
+            "in": "path",
+            "description": "ID of the ski season",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": 2019
+            }
+          },
+          {
+            "name": "dayID",
+            "in": "path",
+            "description": "ID number of ski day in the ski season",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": 2019,
+              "minimum": 1,
+              "maximum": 366
+            }
+          },
+          {
+            "name": "skierID",
+            "in": "path",
+            "description": "ID of the skier riding the lift",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Specify new Season value",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiftRide"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Write successful"
+          },
+          "400": {
+            "description": "Invalid inputs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/responseMsg"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Data not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/responseMsg"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "skiers"
+        ],
+        "summary": "get ski day vertical for a skier",
+        "description": "get the total vertical for the skier for the specified ski day",
+        "operationId": "getSkierDayVertical",
+        "parameters": [
+          {
+            "name": "resortID",
+            "in": "path",
+            "description": "ID of the resort the skier is at",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "seasonID",
+            "in": "path",
+            "description": "ID of the ski season",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": 2019
+            }
+          },
+          {
+            "name": "dayID",
+            "in": "path",
+            "description": "ID number of ski day in the ski season",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": 2019,
+              "minimum": 1,
+              "maximum": 366
+            }
+          },
+          {
+            "name": "skierID",
+            "in": "path",
+            "description": "ID of the skier riding the lift",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation - total vertical for the day returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32",
+                  "example": 34507
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid inputs supplied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/responseMsg"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Data not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/responseMsg"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/skiers/{skierID}/vertical": {
+      "get": {
+        "tags": [
+          "skiers"
+        ],
+        "summary": "get the total vertical for the skier for specified seasons at the specified resort",
+        "description": "get the total vertical for the skier the specified resort. If no season is specified, return all seasons",
+        "operationId": "getSkierResortTotals",
+        "parameters": [
+          {
+            "name": "skierID",
+            "in": "path",
+            "description": "ID the skier to retrieve data for",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "resort",
+            "in": "query",
+            "description": "resort to filter by",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "items": {
+                "type": "string",
+                "example": "Vail"
+              }
+            }
+          },
+          {
+            "name": "season",
+            "in": "query",
+            "description": "season to filter by, optional",
+            "schema": {
+              "type": "object",
+              "items": {
+                "type": "string",
+                "example": 2018
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkierVertical"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid inouts supplied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/responseMsg"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Data not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/responseMsg"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/statistics": {
+      "get": {
+        "tags": [
+          "statistics"
+        ],
+        "summary": "get the API performance stats",
+        "operationId": "getPerformanceStats",
+        "responses": {
+          "200": {
+            "description": "successful operation, empty list returned if no data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIStats"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "responseMsg": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ResortsList": {
+        "type": "object",
+        "properties": {
+          "resorts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "resortName": {
+                  "type": "string"
+                },
+                "resortID": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      },
+      "SkierVertical": {
+        "type": "object",
+        "properties": {
+          "resorts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "seasonID": {
+                  "type": "string"
+                },
+                "totalVert": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      },
+      "LiftRide": {
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "integer",
+            "format": "int16",
+            "example": 217
+          },
+          "liftID": {
+            "type": "integer",
+            "format": "int16",
+            "example": 21
+          }
+        }
+      },
+      "SeasonsList": {
+        "type": "object",
+        "properties": {
+          "seasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "APIStats": {
+        "type": "object",
+        "properties": {
+          "endpointStats": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "URL": {
+                  "type": "string",
+                  "example": "/resorts"
+                },
+                "operation": {
+                  "type": "string",
+                  "example": "GET"
+                },
+                "mean": {
+                  "type": "integer",
+                  "format": "int32",
+                  "example": 11
+                },
+                "max": {
+                  "type": "integer",
+                  "format": "int32",
+                  "example": 198
+                }
+              }
+            }
+          }
+        }
+      },
+      "ResortSkiers": {
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "string",
+            "example": "Mission Ridge"
+          },
+          "numSkiers": {
+            "type": "integer",
+            "format": "int32",
+            "example": 78999
+          }
+        }
+      }
+    }
+  }
+}
